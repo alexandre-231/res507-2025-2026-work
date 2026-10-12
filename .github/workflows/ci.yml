@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        working-directory: labs/20-containerized-node-app/app
+        run: npm ci
+
+      - name: Check JavaScript syntax
+        working-directory: labs/20-containerized-node-app/app
+        run: |
+          node --check app.js
+          node --check server.js
+
+      - name: Build Docker image
+        working-directory: labs/20-containerized-node-app
+        run: docker build -t quote-app -f docker/Dockerfile .
+
+      - name: Create Docker network
+        run: docker network create ci-network
+
+      - name: Start PostgreSQL database
+        working-directory: labs/20-containerized-node-app
+        run: |
+          docker run -d \
+            --name db \
+            --network ci-network \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_PASSWORD=postgres \
+            -e POSTGRES_DB=quotes \
+            -v ${{ github.workspace }}/labs/20-containerized-node-app/db/init.sql:/docker-entrypoint-initdb.d/init.sql \
+            postgres:15
+            
+          echo "Waiting for PostgreSQL to be ready..."
+          for i in {1..30}; do
+            if docker exec db pg_isready -U postgres; then
+              echo "Database ready!"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Start application container
+        run: |
+          docker run -d \
+            --name quote-app \
+            --network ci-network \
+            -p 3000:3000 \
+            -e DATABASE_URL=postgres://postgres:postgres@db:5432/quotes \
+            quote-app
+
+      - name: Run database-backed smoke tests
+        run: |
+          echo "Waiting for application to start..."
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://localhost:3000/health > /dev/null; then
+              echo "App is up!"
+              break
+            fi
+            sleep 1
+          done
+
+          echo "Testing quote insertion..."
+          curl -s -X POST -H "Content-Type: application/json" \
+            -d '{"text":"Ceci est une citation de test CI", "author":"CI Pipeline"}' \
+            http://localhost:3000/quotes
+          
+          echo "Verifying quote retrieval..."
+          RESPONSE=$(curl -s http://localhost:3000/quotes)
+          if echo "$RESPONSE" | grep -q "Ceci est une citation de test CI"; then
+            echo "Test passed: Quote was successfully inserted and retrieved!"
+            exit 0
+          else
+            echo "Test failed: Quote not found in response."
+            exit 1
+          fi
+
+      - name: Show container diagnostics
+        if: failure()
+        run: |
+          docker ps -a
+          docker inspect quote-app || true
+          docker logs quote-app || true
+          docker logs db || true
+
+      - name: Stop and clean containers
+        if: always()
+        run: |
+          docker rm -f quote-app || true
+          docker rm -f db || true
+          docker network rm ci-network || true
