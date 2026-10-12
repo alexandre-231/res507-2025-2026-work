@@ -1,5 +1,5 @@
 name: CI
-
+echo "Test pour le déclencheur Pull Request" >> README.md
 on:
   push:
   pull_request:
