@@ -84,7 +84,7 @@ jobs:
             http://localhost:3000/quotes
           
           echo "Verifying quote retrieval..."
-          RESPONSE=$(curl -s http://localhost:3000/quotes)
+          RESPONSE=$(curl -s -L http://localhost:3000/)
           if echo "$RESPONSE" | grep -q "Ceci est une citation de test CI"; then
             echo "Test passed: Quote was successfully inserted and retrieved!"
             exit 0
