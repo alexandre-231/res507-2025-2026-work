@@ -3,7 +3,7 @@ import formbody from "@fastify/formbody";
 import view from "@fastify/view";
 import handlebars from "handlebars";
 import postgres from "@fastify/postgres";
-// echo "const erreurVolontaire = ;" >> labs/20-containerized-node-app/app/app.js
+ echo "const erreurVolontaire = ;" >> labs/20-containerized-node-app/app/app.js
 export async function buildApp() {
   // Create Fastify instance
   const app = Fastify({ logger: true });
