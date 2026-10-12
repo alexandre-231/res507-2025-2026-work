@@ -1,5 +1,5 @@
 name: CI
-# echo "Test pour le déclencheur Pull Request" >> README.md
+
 on:
   push:
   pull_request:
@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  fast-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -29,6 +29,14 @@ jobs:
         run: |
           node --check app.js
           node --check server.js
+
+  docker-build-and-test:
+    needs: fast-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
 
       - name: Build Docker image
         working-directory: labs/20-containerized-node-app
@@ -71,7 +79,7 @@ jobs:
         run: |
           echo "Waiting for application to start..."
           for attempt in $(seq 1 30); do
-            if curl --fail --silent http://localhost:3000/health > /dev/null; then
+            if curl --fail --silent -L http://localhost:3000/ > /dev/null; then
               echo "App is up!"
               break
             fi
