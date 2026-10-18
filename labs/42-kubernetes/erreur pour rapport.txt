@@ -1,0 +1,56 @@
+kubectl describe pod quote-app-57b88c776b-5ndtt
+Name:             quote-app-57b88c776b-5ndtt
+Namespace:        quote-lab
+Priority:         0
+Service Account:  default
+Node:             devops-vm/10.0.2.15
+Start Time:       Sun, 18 Oct 2026 12:17:27 +0000
+Labels:           app=quote-app
+                  pod-template-hash=57b88c776b
+Annotations:      <none>
+Status:           Running
+IP:               10.42.0.15
+IPs:
+  IP:           10.42.0.15
+Controlled By:  ReplicaSet/quote-app-57b88c776b
+Containers:
+  quote-app:
+    Container ID:   containerd://72e5579cc83e3ea9b0962e3b2da604ae0967f60c7afa5453178f8ba9ce901d40
+    Image:          quote-app:local
+    Image ID:       sha256:a04e1e3b1741c6767a32ace3d5689a60390e4f8b85f7403f4a5446c039705acd
+    Port:           3000/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Sun, 18 Oct 2026 12:17:28 +0000
+    Ready:          False
+    Restart Count:  0
+    Readiness:      http-get http://:3000/does-not-exist delay=3s timeout=1s period=5s #success=1 #failure=3
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-smwzx (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-smwzx:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                 From               Message
+  ----     ------     ----                ----               -------
+  Normal   Scheduled  2m1s                default-scheduler  Successfully assigned quote-lab/quote-app-57b88c776b-5ndtt to devops-vm
+  Normal   Pulled     2m                  kubelet            spec.containers{quote-app}: Container image "quote-app:local" already present on machine and can be accessed by the pod
+  Normal   Created    2m                  kubelet            spec.containers{quote-app}: Container created
+  Normal   Started    2m                  kubelet            spec.containers{quote-app}: Container started
+  Warning  Unhealthy  3s (x24 over 114s)  kubelet            spec.containers{quote-app}: Readiness probe failed: HTTP probe failed with statuscode: 404
