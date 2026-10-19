@@ -1,0 +1,30 @@
+cat << 'EOF' > labs/52-architecture/architecture-notes.md
+# Notes d'Architecture - Lab 52
+
+## 1. Schéma de l'infrastructure
+*(Ajouter l'image du schéma ici, par exemple : `![Schéma](./schema.jpg)`)*
+
+- **Chemin externe :** Navigateur Portable -> Tunnel SSH/Port-forward -> `127.0.0.1:8080`
+- **Chemin interne :** `Service quote-app` -> `Deployment quote-app` -> 3 Pods `quote-app` (Conteneurs Node.js)
+- **Couche Données :** `Service quote-db` -> `Deployment quote-db` -> Pod `postgres:18` -> PVC `quote-db-data` (`local-path`)
+- **Couche Matérielle :** Matériel Hôte -> Hyperviseur -> VM Ubuntu (Nœud K8s) -> Noyau invité partagé.
+
+## 2. Frontières matérielles et noyau partagé
+Les conteneurs d'application (Node.js) et de base de données (PostgreSQL) sur ce nœud partagent tous le même noyau invité (guest kernel) de la VM Ubuntu. L'hyperviseur fournit la limite d'isolation de la VM, tandis que Kubernetes se contente de gérer et d'orchestrer les charges de travail à l'intérieur de cette VM.
+
+## 3. Limites de persistance et de défaillance
+- Un Pod d'application peut être détruit et remplacé sans impact car il est sans état (stateless).
+- Les données (comme la citation insérée) survivent au remplacement du Pod PostgreSQL car elles sont écrites sur un volume persistant (PVC).
+- **Cependant :** Bien que nous ayons 3 répliques de l'application, tout repose sur une seule VM avec un stockage de type `local-path`. Si le disque dur ou la VM lâchent, toutes les données sont perdues car nous n'avons ni sauvegarde externe ni cluster multi-nœuds.
+
+## 4. Preuves de vérification
+- **Lab 42 (Rappel) :** [Lien vers verification.md](../42-kubernetes/verification.md)
+- **Vérification Base de données :**
+  - PVC `quote-db-data` à l'état `Bound`.
+  - Ancien Pod DB : `REMPLACER_PAR_ANCIEN_NOM_POD_DB`
+  - Nouveau Pod DB : `REMPLACER_PAR_NOUVEAU_NOM_POD_DB`
+  - Marqueur testé (survécu au redémarrage) : `REMPLACER_PAR_TA_CITATION_RES509`
+
+## 5. Prochaine action (Limitation principale)
+La prochaine étape logique pour un environnement de production serait de mettre en place une véritable haute disponibilité (HA) des données avec un stockage répliqué sur plusieurs nœuds et un système de sauvegarde hors-site.
+EOF
