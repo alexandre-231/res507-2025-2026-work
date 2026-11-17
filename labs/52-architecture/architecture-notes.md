@@ -1,4 +1,3 @@
-cat << 'EOF' > /home/alex/res507-2025-2026-work/labs/52-architecture/architecture-notes.md
 # Architecture Notes - Lab 52 : Recovery & Persistent Data
 
 ## 1. Schéma de l'infrastructure (Actual System)
