@@ -28,6 +28,9 @@ spec:
     spec:
       containers:
         - name: postgres
+          securityContext:
+            appArmorProfile:
+              type: Unconfined
           image: postgres:18
           envFrom:
             - secretRef:
